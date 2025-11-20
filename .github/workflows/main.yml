@@ -1,4 +1,4 @@
-name: Unzip Files
+name: Unzip and Commit
 
 on:
   workflow_dispatch:
@@ -6,22 +6,26 @@ on:
 jobs:
   unzip:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install unzip
+        run: sudo apt-get install unzip
 
       - name: Unzip file
-        run: |
-          sudo apt-get install unzip
-          unzip truyenhobe.zip -d ./ 
+        run: unzip -o truyenhobe.zip -d ./truyenhobe
 
-      - name: Delete zip file
+      - name: Remove zip
         run: rm truyenhobe.zip
 
-      - name: Commit changes
+      - name: Commit unzipped files
         run: |
-          git config --local user.email "you@example.com"
-          git config --local user.name "GitHub Action"
+          git config --global user.email "truonganthanyeu2023@gmail.com"
+          git config --global user.name "Ho Be"
           git add .
-          git commit -m "Unzip file"
+          git commit -m "Unzipped files"
           git push
