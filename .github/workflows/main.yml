@@ -1,0 +1,27 @@
+name: Unzip Files
+
+on:
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Unzip file
+        run: |
+          sudo apt-get install unzip
+          unzip truyenhobe.zip -d ./ 
+
+      - name: Delete zip file
+        run: rm truyenhobe.zip
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "you@example.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Unzip file"
+          git push
