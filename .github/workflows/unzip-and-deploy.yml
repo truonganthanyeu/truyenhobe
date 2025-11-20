@@ -1,0 +1,62 @@
+name: Unzip and Commit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Truyen*.zip'
+      - '*.zip'
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show repo root files
+        run: ls -la
+
+      - name: Find a zip file in repo root
+        id: findzip
+        run: |
+          Z=$(ls *.zip 2>/dev/null | head -n 1 || true)
+          echo "found=$Z" >> $GITHUB_OUTPUT
+
+      - name: Debug found zip
+        run: |
+          echo "ZIP file: ${{ steps.findzip.outputs.found }}"
+          if [ -z "${{ steps.findzip.outputs.found }}" ]; then echo "No zip found in repo root. Exiting."; fi
+
+      - name: Install unzip
+        if: ${{ steps.findzip.outputs.found != '' }}
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Unzip file into repo root
+        if: ${{ steps.findzip.outputs.found != '' }}
+        run: |
+          ZIP="${{ steps.findzip.outputs.found }}"
+          echo "Unzipping $ZIP ..."
+          unzip -o "$ZIP" -d ./
+
+      - name: Remove the zip file
+        if: ${{ steps.findzip.outputs.found != '' }}
+        run: |
+          rm -f "${{ steps.findzip.outputs.found }}"
+
+      - name: Show files after unzip
+        if: ${{ steps.findzip.outputs.found != '' }}
+        run: ls -la
+
+      - name: Commit and push extracted files
+        if: ${{ steps.findzip.outputs.found != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Unzipped archive via GitHub Action" || echo "Nothing to commit"
+          git push origin HEAD:main || echo "Push failed (maybe no changes or permission denied)"
